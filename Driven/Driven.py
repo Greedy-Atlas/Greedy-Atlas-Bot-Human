@@ -3,6 +3,7 @@ from pop.Pilot import Object_Follow, Camera, SerBot
 from lidar import Lidar
 from threading import Thread
 import time
+import os
 
 class Driven(object):
     def __new__(cls, *args, **kwargs):
@@ -20,6 +21,7 @@ class Driven(object):
 
             self.colorS = None
             self.bot = None
+            self.bot_speed = 50
 
             self.lidar = None
             self.length = [800, 400, 200]   # 측정 거리
@@ -32,9 +34,17 @@ class Driven(object):
 
             cls.__init = True
 
+    def __del__(self):
+        del self.lidar
+        del self.bot
+        del self.colorS
+        del self.of
+        del self.cam
+
     def load(self):
         if not self.loaded:
             self.bot = SerBot()
+            self.bot.setSpeed(self.bot_speed)
             self.lidar = Lidar(self.length)
             print("[SerBot] : === Bot, Lidar Setting Complete ===") 
 
@@ -44,7 +54,7 @@ class Driven(object):
             print("[SerBot] : === Object Follow Module Loaded Complete ===")
             self.colorS = ColorSeperate(self.cam)
             
-            self.run_t = Thread(self.run())
+            self.run_t = Thread(target=self.run(), daemon=True)
             self.run_t.start()
             print("[SerBot] : === Running. ===")
 
@@ -57,24 +67,35 @@ class Driven(object):
         if person:
             self.human_x = round(person['x'] * 4, 1)
 
-            speed = 90 if self.lidar_detect == 0 else 60 if self.lidar_detect == 1 else 30
-            self.bot.forward(speed)
+            self.bot_speed = 90 if self.lidar_detect == 0 else 60 if self.lidar_detect == 1 else 30
         else: 
+            self.human_x = None
             self.bot.stop()
 
     def run(self):
-        self.lidar_detect = self.lidar.check_distance(self.bot.steering)
+        while True:
+            print("[SerBot] : Lidar Scanning")
+            self.lidar_detect = self.lidar.check_distance(self.bot.steering)
 
-        if self.lidar_detect != 3 and not self.run_pause :
-            self.human_detect()
-            if self.colorS.x_cor == None:
-                self.bot.steering = 1.0 if self.human_x > 1.0 else -1.0 if self.human_x < -1.0 else self.human_x
+            if self.lidar_detect != 3 and not self.run_pause :
+                print("[SerBot] : Human Detecting")
+                self.human_detect()
+                if self.colorS.x_cor and self.human_x :
+                    print("[SerBot] : Human Detected")
+                    if self.human_x >= self.colorS.x_cor - 0.05 and self.human_x <= self.colorS.x_cor + 0.05 :
+                        x = self.human_x
+                    else :
+                        x = round(self.colorS.x_cor*4, 1)
+                    self.bot.steering = 1.0 if x > 1.0 else -1.0 if x < -1.0 else x
+                    self.bot.forward()
+                else:
+                    self.bot.stop()
             else:
-                self.bot.steering = 1.0 if self.colorS.x_cor> 1.0 else -1.0 if self.colorS.x_cor < -1.0 else self.colorS.x_cor
-
-        else:
-            self.bot.stop()
+                self.bot.stop()
 
 if __name__ == '__main__' :
-    drv = Driven()
-    drv.load()
+    try:
+        drv = Driven()
+        drv.load()
+    except KeyboardInterrupt:
+        os.exit(drv)
