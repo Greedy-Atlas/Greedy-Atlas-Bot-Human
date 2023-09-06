@@ -18,9 +18,9 @@ class ColorSeperate():
 
   def __trans_cor(self, percent):
     if(percent >= 50) :
-      cor = -1 * ((50+(percent-100))/50)
+      cor = -1 * (-1 * ((50+(percent-100))/50))
     elif(percent < 50) :
-      cor = (50-percent)/50
+      cor = -1 * ((50-percent)/50)
     else:
       cor = None
     return cor
