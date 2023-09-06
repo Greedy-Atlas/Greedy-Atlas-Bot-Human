@@ -27,7 +27,7 @@ class Lidar:
         degrees = V[:, 0]   # Extract degrees Column
         distance = V[:, 1]  # Extract distance Column
 
-        valid_degrees = np.logical_and(degrees > 0 + sub_value and degrees < 360 - sub_value)
+        valid_degrees = np.logical_and(degrees > 0 + sub_value, degrees < 360 - sub_value)
 
         if np.any(valid_degrees):
             min_distance = np.min(distance[valid_degrees])
