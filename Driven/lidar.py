@@ -18,6 +18,10 @@ class Lidar:
 
     def __trans_steer(self, steering):
         return 90 * steering
+    
+    def pause(self, state):
+        if state: self.lidar.stopMotor()
+        else: self.lidar.startMotor()
 
     def check_distance(self, steering):
         detect = 0
