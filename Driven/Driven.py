@@ -24,7 +24,7 @@ class Driven(object):
             self.bot_speed = 50
 
             self.lidar = None
-            self.length = [800, 400, 200]   # 측정 거리
+            self.length = [1000, 400, 200]   # 측정 거리
             self.lidar_detect = 3
 
             self.loaded = False
@@ -68,24 +68,26 @@ class Driven(object):
             self.human_x = round(person['x'] * 4, 1)
 
             self.bot_speed = 90 if self.lidar_detect == 0 else 60 if self.lidar_detect == 1 else 30
+            # self.bot.setSpeed(self.bot_speed)
         else: 
             self.human_x = None
             self.bot.stop()
 
     def run(self):
         while True:
-            if not self.run_pause: 
+            # print("[SerBot] : Lidar Scanning")
+            if not self.run_pause :
                 self.lidar_detect = self.lidar.check_distance(self.bot.steering)
 
                 if self.lidar_detect != 3 :
-                    hum_x = self.human_x
-                    colS = self.colorS.x_cor
                     self.human_detect()
-                    if colS and hum_x :
-                        if hum_x >= colS - 0.05 and hum_x <= colS + 0.05 :
+                    if self.colorS.x_cor and self.human_x :
+                        hum_x = self.human_x
+                        cols_x = self.colorS.x_cor
+                        if hum_x >= cols_x - 0.05 and hum_x <= cols_x + 0.05 :
                             x = hum_x
                         else :
-                            x = round(colS*4, 1)
+                            x = round(cols_x*4, 1)
                         self.bot.steering = 1.0 if x > 1.0 else -1.0 if x < -1.0 else x
                         self.bot.forward()
                     else:
@@ -93,9 +95,28 @@ class Driven(object):
                 else:
                     self.bot.stop()
 
+    def pause(self, state):
+        if state:
+            self.lidar.pause(True)
+            self.bot.stop()
+            self.run_pause = True
+        else:
+            self.lidar.pause(False)
+            self.run_pause = False
+
+
 if __name__ == '__main__' :
     try:
         drv = Driven()
         drv.load()
+
+        while True:
+            i = input()
+            if i == 'T':
+                drv.pause(True)
+            elif i == 'F':
+                drv.pause(False)
+            else:
+                print("What?")
     except KeyboardInterrupt:
-        sys.exit(drv)
+        sys.exit()
