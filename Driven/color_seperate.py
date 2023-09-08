@@ -35,8 +35,8 @@ class ColorSeperate():
       frame = self.cam.value
       hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
 
-      lvalue = np.array([34, 157, 87])    # cone : [42, 103, 40]
-      rvalue = np.array([117, 255, 255])    # cone : [61, 255, 255]
+      lvalue = np.array([33, 96, 156])    # cone : [42, 103, 40]
+      rvalue = np.array([61, 255, 255])    # cone : [61, 255, 255]
 
       mask_green = cv2.inRange(hsv, lvalue, rvalue)
       kernel = np.ones((7,7),np.uint8)
